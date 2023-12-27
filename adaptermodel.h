@@ -2,6 +2,8 @@
 #define ADAPTERMODEL_H
 
 #include <QAbstractListModel>
+#include <QDBusPendingReply>
+
 #include <QtDBus>
 
 class AdapterModel : public QAbstractListModel
@@ -9,6 +11,9 @@ class AdapterModel : public QAbstractListModel
     Q_OBJECT
 
 public:
+    typedef QMap<QString, QVariantMap> InterfaceList;
+    typedef QMap<QDBusObjectPath, InterfaceList> ManagedObjectList;
+
     AdapterModel(QObject *parent = nullptr);
     enum Roles { AdapterPath = Qt::UserRole + 1, AdapterName, ItemText };
 
@@ -25,6 +30,12 @@ private:
     QStringList m_devices;
     QStringList m_deviceNames;
     QHash<int, QByteArray> m_roleNames;
+
+private:
+    inline bool getManagedObjects(QDBusPendingReply<ManagedObjectList> &reply);
 };
+
+Q_DECLARE_METATYPE(AdapterModel::InterfaceList)
+Q_DECLARE_METATYPE(AdapterModel::ManagedObjectList)
 
 #endif // ADAPTERMODEL_H

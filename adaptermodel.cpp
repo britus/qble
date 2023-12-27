@@ -1,12 +1,6 @@
 #include "adaptermodel.h"
 #include <QDebug>
 
-typedef QMap<QString, QVariantMap> InterfaceList;
-typedef QMap<QDBusObjectPath, InterfaceList> ManagedObjectList;
-
-Q_DECLARE_METATYPE(InterfaceList)
-Q_DECLARE_METATYPE(ManagedObjectList)
-
 AdapterModel::AdapterModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -17,26 +11,39 @@ AdapterModel::AdapterModel(QObject *parent)
     m_roleNames[AdapterName] = "name";
     m_roleNames[ItemText] = "itemText";
 
-    m_objectManager = new QDBusInterface("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus());
+    m_objectManager = new QDBusInterface( //
+        "org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus());
 
-    QDBusPendingReply<ManagedObjectList> reply = m_objectManager->call("GetManagedObjects");
-    reply.waitForFinished();
-    if (reply.isError()) {
+    QDBusPendingReply<ManagedObjectList> reply;
+    if (!getManagedObjects(reply)) {
         qCritical() << "[AdapterModel]: Unable to run DBUS::GetManagedObjects";
         return;
     }
 
-    QList<QDBusObjectPath> keys = reply.value().keys();
-    for (const QDBusObjectPath &path: static_cast<const QList<QDBusObjectPath>>(keys)) {
+    const QList<QDBusObjectPath> keys = static_cast< //
+        const QList<QDBusObjectPath>>(reply.value().keys());
+    for (const QDBusObjectPath &path: keys) {
         const InterfaceList ifaceList = reply.value().value(path);
-        QList<QString> ikeys = ifaceList.keys();
-        for (const QString &iface: static_cast<const QList<QString>>(ikeys)) {
+        const QList<QString> ikeys = static_cast< //
+            const QList<QString>>(ifaceList.keys());
+        for (const QString &iface: ikeys) {
             if (iface == QStringLiteral("org.bluez.Adapter1")) {
                 m_devices << path.path();
                 m_deviceNames << ifaceList.value(iface).value(QStringLiteral("Name")).toString();
             }
         }
     }
+}
+
+inline bool AdapterModel::getManagedObjects(QDBusPendingReply<ManagedObjectList> &reply)
+{
+    reply = m_objectManager->call("GetManagedObjects");
+    reply.waitForFinished();
+    if (reply.isError()) {
+        qCritical() << "[AdapterModel]: Unable to run DBUS::GetManagedObjects";
+        return false;
+    }
+    return true;
 }
 
 int AdapterModel::columnCount(const QModelIndex &) const
