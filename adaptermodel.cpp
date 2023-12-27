@@ -6,7 +6,8 @@ typedef QMap<QDBusObjectPath, InterfaceList> ManagedObjectList;
 Q_DECLARE_METATYPE(InterfaceList)
 Q_DECLARE_METATYPE(ManagedObjectList)
 
-AdapterModel::AdapterModel()
+AdapterModel::AdapterModel(QObject *parent)
+    : QAbstractListModel(parent)
 {
     qDBusRegisterMetaType<InterfaceList>();
     qDBusRegisterMetaType<ManagedObjectList>();
@@ -22,8 +23,8 @@ AdapterModel::AdapterModel()
         const InterfaceList ifaceList = reply.value().value(path);
         for (const QString &iface: static_cast<const QList<QString>>(ifaceList.keys())) {
             if (iface == QStringLiteral("org.bluez.Adapter1")) {
-               m_devices << path.path();
-               m_deviceNames << ifaceList.value(iface).value(QStringLiteral("Name")).toString();
+                m_devices << path.path();
+                m_deviceNames << ifaceList.value(iface).value(QStringLiteral("Name")).toString();
             }
         }
     }
