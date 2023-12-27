@@ -1,5 +1,6 @@
 #include "qblewindow.h"
 #include "ui_qblewindow.h"
+#include <QDebug>
 #include <adaptermodel.h>
 
 QBleWindow::QBleWindow(QWidget *parent)
@@ -19,4 +20,19 @@ QBleWindow::~QBleWindow()
 void QBleWindow::on_pushButton_clicked()
 {
     //
+}
+
+void QBleWindow::on_tableView_doubleClicked(const QModelIndex &index)
+{
+    qDebug() << "TBV doubleClicked:" << index;
+}
+
+void QBleWindow::on_tableView_clicked(const QModelIndex &index)
+{
+    qDebug() << "TBV clicked:" << index;
+}
+
+void QBleWindow::on_tableView_activated(const QModelIndex &index)
+{
+    qDebug() << "TBV activated:" << index;
 }
