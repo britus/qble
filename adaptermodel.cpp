@@ -1,4 +1,5 @@
 #include "adaptermodel.h"
+#include <QDebug>
 
 typedef QMap<QString, QVariantMap> InterfaceList;
 typedef QMap<QDBusObjectPath, InterfaceList> ManagedObjectList;
@@ -16,12 +17,16 @@ AdapterModel::AdapterModel(QObject *parent)
 
     QDBusPendingReply<ManagedObjectList> reply = m_objectManager->call("GetManagedObjects");
     reply.waitForFinished();
-    if (reply.isError())
+    if (reply.isError()) {
+        qCritical() << "[AdapterModel]: Unable to run DBUS::GetManagedObjects";
         return;
+    }
 
-    for (const QDBusObjectPath &path: static_cast<const QList<QDBusObjectPath>>(reply.value().keys())) {
+    QList<QDBusObjectPath> keys = reply.value().keys();
+    for (const QDBusObjectPath &path: static_cast<const QList<QDBusObjectPath>>(keys)) {
         const InterfaceList ifaceList = reply.value().value(path);
-        for (const QString &iface: static_cast<const QList<QString>>(ifaceList.keys())) {
+        QList<QString> ikeys = ifaceList.keys();
+        for (const QString &iface: static_cast<const QList<QString>>(ikeys)) {
             if (iface == QStringLiteral("org.bluez.Adapter1")) {
                 m_devices << path.path();
                 m_deviceNames << ifaceList.value(iface).value(QStringLiteral("Name")).toString();
@@ -32,6 +37,7 @@ AdapterModel::AdapterModel(QObject *parent)
 
 int AdapterModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent)
     return m_devices.count();
 }
 
@@ -53,6 +59,5 @@ QHash<int, QByteArray> AdapterModel::roleNames() const
     names[AdapterPath] = "path";
     names[AdapterName] = "name";
     names[ItemText] = "itemText";
-
     return names;
 }

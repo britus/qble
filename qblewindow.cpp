@@ -8,6 +8,7 @@ QBleWindow::QBleWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tableView->setModel(new AdapterModel(this));
+    ui->tableView->update(QModelIndex());
 }
 
 QBleWindow::~QBleWindow()
